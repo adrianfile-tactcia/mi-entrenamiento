@@ -24,7 +24,15 @@ button.ghost{background:transparent;color:var(--muted);padding:6px 8px}
 button:disabled{opacity:.4}
 :focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 nav{display:flex;gap:8px;flex-wrap:wrap}
-#tabs{margin-top:10px}
+#tabs{margin-top:10px;flex-wrap:nowrap;gap:6px}
+#tabs button{flex:1;padding:10px 4px;font-size:15px}
+.chips{flex-wrap:nowrap;overflow-x:auto;padding:8px 0 2px;-webkit-overflow-scrolling:touch}
+.chips button{flex:none;padding:8px 12px}
+.tools{margin:8px 0}
+.tools button{min-width:44px}
+input[type=search]{width:100%;margin-top:4px}
+.libgroup > h2{margin:22px 0 4px}
+[hidden]{display:none!important}
 small,.muted{color:var(--muted)}
 label{display:block;margin:8px 0}
 input[type=checkbox]{width:22px;height:22px;margin:0 6px 0 0;padding:0;accent-color:var(--acc);vertical-align:middle}
@@ -32,7 +40,7 @@ input[type=checkbox]{width:22px;height:22px;margin:0 6px 0 0;padding:0;accent-co
 .line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .set{display:inline-flex;align-items:center;margin:0;padding:8px 10px;background:var(--ctl);border-radius:9px;cursor:pointer}
 .last{display:block;margin-top:8px;font-size:13px;color:var(--muted)}
-.prog{display:flex;align-items:center;gap:10px}
+.prog{display:flex;align-items:center;gap:10px;margin-top:12px}
 progress{flex:1;width:100%;accent-color:var(--acc)}
 .warn{background:#3a3220;color:var(--warn);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:14px}
 .row{display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -59,19 +67,84 @@ progress{flex:1;width:100%;accent-color:var(--acc)}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <input type="file" id="importFile" accept="application/json,.json" hidden>
 <script>
-const PLANS_V1={A:['Extensión de cuádriceps','Press de pecho en máquina','Jalón al pecho','Curl femoral sentado','Elevaciones laterales sentado','Dead bug'],B:['Abductores en máquina','Remo sentado con apoyo de pecho','Press inclinado en máquina','Extensión de cuádriceps','Press de hombros sentado','Crunch abdominal'],C:['Curl femoral sentado','Aperturas de pecho en máquina','Jalón al pecho agarre neutro','Abductores en máquina','Curl de bíceps sentado','Extensión de tríceps sentado']};const plans={A:['Extensión de cuádriceps','Press de pecho en máquina','Jalón al pecho','Curl femoral sentado','Almeja con banda','Elevaciones laterales sentado','Dead bug'],B:['Abductores en máquina','Aductores en máquina','Remo sentado con apoyo de pecho','Press inclinado en máquina','Extensión de cuádriceps','Press de hombros sentado','Crunch abdominal'],C:['Curl femoral sentado','Aperturas de pecho en máquina','Jalón al pecho agarre neutro','Abductores en máquina','Elevación de pierna recta','Curl de bíceps sentado','Extensión de tríceps sentado']};const tips={'Extensión de cuádriceps':'Alineá la rodilla con el eje de la máquina. Extendé sin bloquear.','Press de pecho en máquina':'Espalda apoyada, empujá sin bloquear los codos.','Jalón al pecho':'Llevá la barra hacia el pecho, sin balancearte.','Curl femoral sentado':'Flexioná las rodillas lentamente, sin empujar con los dedos.','Elevaciones laterales sentado':'Elevá los brazos hasta la altura de los hombros.','Dead bug':'Boca arriba, alterná brazo y pierna contrarios sin arquear la espalda.','Abductores en máquina':'Separá las rodillas lentamente, sin impulsarte con los pies.','Remo sentado con apoyo de pecho':'Tirá de los agarres hacia el torso, sin empujar con los pies.','Press inclinado en máquina':'Empujá hacia arriba y adelante con espalda apoyada.','Press de hombros sentado':'Empujá hacia arriba sin arquear la espalda.','Crunch abdominal':'Elevá ligeramente los hombros sin tirar del cuello.','Aperturas de pecho en máquina':'Acercá los brazos con codos ligeramente flexionados.','Jalón al pecho agarre neutro':'Palmas enfrentadas, llevá los agarres hacia el pecho.','Curl de bíceps sentado':'Flexioná los codos sin mover el torso.','Extensión de tríceps sentado':'Extendé los codos con carga ligera y espalda estable.','Aductores en máquina':'Juntá las rodillas lentamente, sin empujar con los pies.','Elevación de pierna recta':'Boca arriba, con la otra rodilla flexionada. Subí la pierna estirada hasta la altura de la otra rodilla y bajá lento.','Almeja con banda':'De costado, rodillas flexionadas y pies juntos. Abrí la rodilla de arriba sin girar la cadera. La banda es opcional.'};const visuals={
-'Extensión de cuádriceps':['leg','extend'], 'Curl femoral sentado':['leg','curl'], 'Abductores en máquina':['front','abduct'], 'Press de pecho en máquina':['side','press'], 'Press inclinado en máquina':['side','incline'], 'Remo sentado con apoyo de pecho':['side','row'], 'Jalón al pecho':['side','pull'], 'Jalón al pecho agarre neutro':['side','pull'], 'Press de hombros sentado':['side','shoulder'], 'Elevaciones laterales sentado':['front','raise'], 'Aperturas de pecho en máquina':['front','fly'], 'Curl de bíceps sentado':['side','biceps'], 'Extensión de tríceps sentado':['side','triceps'], 'Crunch abdominal':['floor','crunch'], 'Dead bug':['floor','dead'],'Aductores en máquina':['front','adduct'],'Elevación de pierna recta':['floor','slr'],'Almeja con banda':['floor','clam']};
-function demo(e,open){let [view,m]=visuals[e];let machine=!['raise','biceps','triceps','crunch','dead'].includes(m);let base='',body='',moving='';const line=(d,c='#e8e9f2',w=9)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;const motion=(a,b,c='#b7a6ff',w=10)=>`<path d="${a}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"><animate attributeName="d" values="${a};${b};${a}" dur="3s" repeatCount="indefinite"/></path>`;const head=(x,y)=>`<circle cx="${x}" cy="${y}" r="13" fill="#e8e9f2"/>`;
+// ---------- Biblioteca de ejercicios ----------
+// Solo ejercicios sin impacto, sentado, acostado o con apoyo, que no cargan peso sobre el pie.
+// g: grupo muscular · n: nombre · t: indicación · v: animación · r: repeticiones · kg: false si no lleva peso
+const LIBRARY = [
+  { g: 'Pecho', n: 'Press de pecho en máquina', t: 'Espalda apoyada, empujá sin bloquear los codos.', v: ['side', 'press'] },
+  { g: 'Pecho', n: 'Press inclinado en máquina', t: 'Empujá hacia arriba y adelante con espalda apoyada.', v: ['side', 'incline'] },
+  { g: 'Pecho', n: 'Aperturas de pecho en máquina', t: 'Acercá los brazos con codos ligeramente flexionados.', v: ['front', 'fly'] },
+  { g: 'Pecho', n: 'Press de pecho con mancuernas en banco', t: 'Acostado, con los pies apoyados sobre el banco. Bajá las mancuernas al pecho y empujá sin bloquear.', v: ['floor', 'bench'] },
+  { g: 'Pecho', n: 'Aperturas con mancuernas en banco', t: 'Acostado, con los pies sobre el banco. Abrí los brazos en arco con codos apenas flexionados, sin bajar de la altura del pecho.' },
+
+  { g: 'Espalda', n: 'Jalón al pecho', t: 'Llevá la barra hacia el pecho, sin balancearte.', v: ['side', 'pull'] },
+  { g: 'Espalda', n: 'Jalón al pecho agarre neutro', t: 'Palmas enfrentadas, llevá los agarres hacia el pecho.', v: ['side', 'pull'] },
+  { g: 'Espalda', n: 'Jalón al pecho agarre cerrado', t: 'Manos juntas, llevá el agarre hacia el esternón con los codos pegados al cuerpo.', v: ['side', 'pull'] },
+  { g: 'Espalda', n: 'Remo sentado con apoyo de pecho', t: 'Tirá de los agarres hacia el torso, sin empujar con los pies.', v: ['side', 'row'] },
+  { g: 'Espalda', n: 'Remo en máquina agarre abierto', t: 'Pecho apoyado, tirá con los codos abiertos a la altura de los hombros.', v: ['side', 'row'] },
+  { g: 'Espalda', n: 'Face pull sentado', t: 'Con polea alta o banda, tirá hacia la cara separando las manos al final.', v: ['side', 'row'] },
+  { g: 'Espalda', n: 'Pullover en máquina', t: 'Desde arriba de la cabeza, bajá los brazos casi estirados hasta la cadera.' },
+
+  { g: 'Hombros', n: 'Press de hombros sentado', t: 'Empujá hacia arriba sin arquear la espalda.', v: ['side', 'shoulder'] },
+  { g: 'Hombros', n: 'Press de hombros con mancuernas sentado', t: 'Respaldo vertical. Subí las mancuernas sin chocarlas ni arquear la espalda.', v: ['side', 'shoulder'] },
+  { g: 'Hombros', n: 'Elevaciones laterales sentado', t: 'Elevá los brazos hasta la altura de los hombros.', v: ['front', 'raise'] },
+  { g: 'Hombros', n: 'Elevaciones frontales sentado', t: 'Subí los brazos al frente hasta la altura de los hombros, sin balancearte.', v: ['side', 'frontraise'] },
+  { g: 'Hombros', n: 'Pájaro en máquina', t: 'Mirando al respaldo, abrí los brazos hacia atrás. Trabaja la parte posterior del hombro.', v: ['front', 'rfly'] },
+  { g: 'Hombros', n: 'Rotación externa con banda sentado', t: 'Codo pegado al cuerpo a 90°, girá el antebrazo hacia afuera lentamente.', r: '12 por lado', kg: false },
+
+  { g: 'Bíceps', n: 'Curl de bíceps sentado', t: 'Flexioná los codos sin mover el torso.', v: ['side', 'biceps'] },
+  { g: 'Bíceps', n: 'Curl martillo sentado', t: 'Palmas enfrentadas, flexioná los codos sin balancear.', v: ['side', 'biceps'] },
+  { g: 'Bíceps', n: 'Curl en máquina', t: 'Brazos apoyados en el atril, subí sin despegar los codos.', v: ['side', 'biceps'] },
+  { g: 'Bíceps', n: 'Curl concentrado sentado', t: 'Codo apoyado en el muslo, subí la mancuerna despacio.', v: ['side', 'biceps'], r: '12 por lado' },
+
+  { g: 'Tríceps', n: 'Extensión de tríceps sentado', t: 'Extendé los codos con carga ligera y espalda estable.', v: ['side', 'triceps'] },
+  { g: 'Tríceps', n: 'Fondos en máquina sentado', t: 'Empujá los agarres hacia abajo hasta estirar los brazos, sin bloquear.', v: ['side', 'dip'] },
+  { g: 'Tríceps', n: 'Extensión de tríceps en polea sentado', t: 'Sentado frente a la polea alta, empujá hacia abajo con los codos fijos.', v: ['side', 'dip'] },
+  { g: 'Tríceps', n: 'Press francés acostado', t: 'Acostado con los pies sobre el banco, bajá la barra o mancuernas hacia la frente doblando solo los codos.' },
+
+  { g: 'Piernas', n: 'Extensión de cuádriceps', t: 'Alineá la rodilla con el eje de la máquina. Extendé sin bloquear.', v: ['leg', 'extend'] },
+  { g: 'Piernas', n: 'Extensión de cuádriceps a una pierna', t: 'Igual que la extensión, de a una pierna y con menos peso.', v: ['leg', 'extend'], r: '12 por lado' },
+  { g: 'Piernas', n: 'Curl femoral sentado', t: 'Flexioná las rodillas lentamente, sin empujar con los dedos.', v: ['leg', 'curl'] },
+  { g: 'Piernas', n: 'Curl femoral acostado', t: 'Boca abajo, llevá los talones hacia la cola sin despegar la cadera.', v: ['floor', 'prone'] },
+  { g: 'Piernas', n: 'Abductores en máquina', t: 'Separá las rodillas lentamente, sin impulsarte con los pies.', v: ['front', 'abduct'] },
+  { g: 'Piernas', n: 'Aductores en máquina', t: 'Juntá las rodillas lentamente, sin empujar con los pies.', v: ['front', 'adduct'] },
+  { g: 'Piernas', n: 'Elevación de pierna recta', t: 'Boca arriba, con la otra rodilla flexionada. Subí la pierna estirada hasta la altura de la otra rodilla y bajá lento.', v: ['floor', 'slr'], r: '10 por lado', kg: false },
+  { g: 'Piernas', n: 'Isométrico de cuádriceps con toalla', t: 'Sentado o acostado, toalla enrollada bajo la rodilla. Apretá la rodilla contra la toalla y sostené.', r: '10 × 5 s', kg: false },
+
+  { g: 'Glúteos', n: 'Almeja con banda', t: 'De costado, rodillas flexionadas y pies juntos. Abrí la rodilla de arriba sin girar la cadera. La banda es opcional.', v: ['floor', 'clam'], r: '12 por lado', kg: false },
+  { g: 'Glúteos', n: 'Elevación lateral de pierna acostado', t: 'De costado, pierna de arriba estirada. Subila un poco, sin girar la cadera, y bajá lento.', v: ['floor', 'sidelift'], r: '12 por lado', kg: false },
+  { g: 'Glúteos', n: 'Patada de glúteo en cuadrupedia', t: 'Apoyado en manos y rodillas, llevá una pierna hacia atrás y arriba con la rodilla flexionada.', v: ['floor', 'kick'], r: '12 por lado', kg: false },
+  { g: 'Glúteos', n: 'Abducción en cuadrupedia', t: 'Apoyado en manos y rodillas, separá una rodilla hacia el costado sin girar el tronco.', r: '12 por lado', kg: false },
+
+  { g: 'Abdomen', n: 'Crunch abdominal', t: 'Elevá ligeramente los hombros sin tirar del cuello.', v: ['floor', 'crunch'] },
+  { g: 'Abdomen', n: 'Dead bug', t: 'Boca arriba, alterná brazo y pierna contrarios sin arquear la espalda.', v: ['floor', 'dead'], r: '8 por lado', kg: false },
+  { g: 'Abdomen', n: 'Plancha sobre rodillas', t: 'Antebrazos y rodillas en el piso, cuerpo en línea. Sostené sin hundir la cintura.', v: ['floor', 'plank'], r: '20–30 s', kg: false },
+  { g: 'Abdomen', n: 'Bird dog', t: 'En cuadrupedia, estirá brazo y pierna contrarios sin mover la cadera.', v: ['floor', 'birddog'], r: '8 por lado', kg: false },
+  { g: 'Abdomen', n: 'Rodillas al pecho acostado', t: 'Boca arriba, llevá las rodillas hacia el pecho sin impulso y bajá lento.', v: ['floor', 'kneeup'], kg: false },
+  { g: 'Abdomen', n: 'Rotación de tronco en máquina', t: 'Sentado, girá el tronco lentamente con la cadera fija.', r: '10 por lado' },
+  { g: 'Abdomen', n: 'Pallof press sentado', t: 'Con banda o polea al costado, empujá las manos al frente sin dejar que el tronco gire.', r: '10 por lado', kg: false },
+];
+const GROUPS = ['Pecho', 'Espalda', 'Hombros', 'Bíceps', 'Tríceps', 'Piernas', 'Glúteos', 'Abdomen'];
+const LIB = Object.fromEntries(LIBRARY.map(x => [x.n, x]));
+const tips = Object.fromEntries(LIBRARY.map(x => [x.n, x.t]));
+const visuals = Object.fromEntries(LIBRARY.filter(x => x.v).map(x => [x.n, x.v]));
+const PLANS_V1={A:['Extensión de cuádriceps','Press de pecho en máquina','Jalón al pecho','Curl femoral sentado','Elevaciones laterales sentado','Dead bug'],B:['Abductores en máquina','Remo sentado con apoyo de pecho','Press inclinado en máquina','Extensión de cuádriceps','Press de hombros sentado','Crunch abdominal'],C:['Curl femoral sentado','Aperturas de pecho en máquina','Jalón al pecho agarre neutro','Abductores en máquina','Curl de bíceps sentado','Extensión de tríceps sentado']};const DEFAULT_ROUTINES={A:['Extensión de cuádriceps','Press de pecho en máquina','Jalón al pecho','Curl femoral sentado','Almeja con banda','Elevaciones laterales sentado','Dead bug'],B:['Abductores en máquina','Aductores en máquina','Remo sentado con apoyo de pecho','Press inclinado en máquina','Extensión de cuádriceps','Press de hombros sentado','Crunch abdominal'],C:['Curl femoral sentado','Aperturas de pecho en máquina','Jalón al pecho agarre neutro','Abductores en máquina','Elevación de pierna recta','Curl de bíceps sentado','Extensión de tríceps sentado']};
+function demo(e,open){if(!visuals[e])return '';let [view,m]=visuals[e];let machine=!['raise','biceps','triceps','crunch','dead','frontraise'].includes(m);let base='',body='',moving='';const line=(d,c='#e8e9f2',w=9)=>`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`;const motion=(a,b,c='#b7a6ff',w=10)=>`<path d="${a}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"><animate attributeName="d" values="${a};${b};${a}" dur="3s" repeatCount="indefinite"/></path>`;const head=(x,y)=>`<circle cx="${x}" cy="${y}" r="13" fill="#e8e9f2"/>`;
 if(view==='floor'){base=line('M45 150 H275','#657188',5);body=head(75,132)+line('M90 139 L155 139 L190 103 L230 146');moving=m==='crunch'?motion('M90 139 L120 139 L155 139','M90 105 L120 123 L155 139'):motion('M110 137 L110 80 L110 60 M155 139 L190 103 L230 146','M110 137 L70 100 L48 95 M155 139 L200 125 L245 120');if(m==='slr'){moving=motion('M155 139 L200 139 L245 139','M155 139 L195 117 L235 95')}if(m==='clam'){body=head(75,132)+line('M90 139 L155 139')+line('M155 141 L195 137 L220 148','#9aa3b5');moving=motion('M155 137 L195 133 L220 146','M155 137 L188 98 L220 146')}if(m==='crunch'){body=line('M155 139 L190 103 L230 146')+`<circle cx="75" cy="132" r="13" fill="#e8e9f2"><animate attributeName="cy" values="132;98;132" dur="3s" repeatCount="indefinite"/></circle>`}}
-else if(view==='front'){base=line('M95 170 H225 M160 170 V120 M115 118 H205','#657188',7);body=head(160,43)+line('M160 60 V112 M160 75 L130 75 M160 75 L190 75');if(m==='abduct'||m==='adduct'){base+=line('M90 145 V95 M230 145 V95','#657188',8);let ab=['M145 112 L135 137 L135 165 M175 112 L185 137 L185 165','M145 112 L100 137 L100 165 M175 112 L220 137 L220 165'];moving=m==='adduct'?motion(ab[1],ab[0]):motion(...ab);body+=line('M130 75 L130 110 M190 75 L190 110')}else{body+=line('M145 112 L135 145 L135 165 M175 112 L185 145 L185 165');moving=m==='raise'?motion('M130 75 L120 108 L120 130 M190 75 L200 108 L200 130','M130 75 L95 75 L65 75 M190 75 L225 75 L255 75'):motion('M130 75 L95 75 L65 75 M190 75 L225 75 L255 75','M130 75 L145 85 L155 85 M190 75 L175 85 L165 85');if(m==='fly')base+=line('M60 170 V65 H95 M260 170 V65 H225','#657188',6)}}
-else{base=line('M85 170 H250 M130 170 V115 H185 M128 115 L115 65','#657188',7);if(machine)base+=line('M245 170 V25 H145','#657188',6)+`<rect x="230" y="100" width="30" height="65" rx="4" fill="#465269"/>`;body=head(135,42)+line('M135 59 L145 110 L185 110');if(view==='leg'){body+=line('M140 72 L165 95 L180 95');moving=m==='extend'?motion('M185 110 L185 145 L185 158','M185 110 L225 110 L240 110'):motion('M185 110 L225 110 L240 110','M185 110 L185 145 L170 155');base+=line('M185 110 L205 150','#657188',5)+`<rect x="194" y="142" width="22" height="12" rx="5" fill="#657188"/>`}else{body+=line('M185 110 L185 150 L205 150');let pairs={press:['M140 70 L160 95 L180 75','M140 70 L185 75 L225 75'],incline:['M140 70 L165 95 L180 70','M140 70 L175 48 L205 25'],row:['M140 70 L185 85 L225 85','M140 70 L115 95 L165 85'],pull:['M140 70 L150 35 L165 15','M140 70 L125 95 L165 65'],shoulder:['M140 70 L165 90 L175 60','M140 70 L150 35 L155 12'],biceps:['M140 70 L150 110 L160 140','M140 70 L150 110 L175 75'],triceps:['M140 70 L145 35 L115 65','M140 70 L145 35 L145 8']};moving=motion(...pairs[m]);if(m==='row')base+=line('M170 115 V65','#657188',12);if(m==='pull')base+=line('M140 15 H190','#657188',5)}}
+else if(view==='front'){base=line('M95 170 H225 M160 170 V120 M115 118 H205','#657188',7);body=head(160,43)+line('M160 60 V112 M160 75 L130 75 M160 75 L190 75');if(m==='abduct'||m==='adduct'){base+=line('M90 145 V95 M230 145 V95','#657188',8);let ab=['M145 112 L135 137 L135 165 M175 112 L185 137 L185 165','M145 112 L100 137 L100 165 M175 112 L220 137 L220 165'];moving=m==='adduct'?motion(ab[1],ab[0]):motion(...ab);body+=line('M130 75 L130 110 M190 75 L190 110')}else{body+=line('M145 112 L135 145 L135 165 M175 112 L185 145 L185 165');let fl=['M130 75 L95 75 L65 75 M190 75 L225 75 L255 75','M130 75 L145 85 L155 85 M190 75 L175 85 L165 85'];moving=m==='raise'?motion('M130 75 L120 108 L120 130 M190 75 L200 108 L200 130','M130 75 L95 75 L65 75 M190 75 L225 75 L255 75'):m==='rfly'?motion(fl[1],fl[0]):motion(...fl);if(m==='fly'||m==='rfly')base+=line('M60 170 V65 H95 M260 170 V65 H225','#657188',6)}}
+else{base=line('M85 170 H250 M130 170 V115 H185 M128 115 L115 65','#657188',7);if(machine)base+=line('M245 170 V25 H145','#657188',6)+`<rect x="230" y="100" width="30" height="65" rx="4" fill="#465269"/>`;body=head(135,42)+line('M135 59 L145 110 L185 110');if(view==='leg'){body+=line('M140 72 L165 95 L180 95');moving=m==='extend'?motion('M185 110 L185 145 L185 158','M185 110 L225 110 L240 110'):motion('M185 110 L225 110 L240 110','M185 110 L185 145 L170 155');base+=line('M185 110 L205 150','#657188',5)+`<rect x="194" y="142" width="22" height="12" rx="5" fill="#657188"/>`}else{body+=line('M185 110 L185 150 L205 150');let pairs={press:['M140 70 L160 95 L180 75','M140 70 L185 75 L225 75'],incline:['M140 70 L165 95 L180 70','M140 70 L175 48 L205 25'],row:['M140 70 L185 85 L225 85','M140 70 L115 95 L165 85'],pull:['M140 70 L150 35 L165 15','M140 70 L125 95 L165 65'],shoulder:['M140 70 L165 90 L175 60','M140 70 L150 35 L155 12'],biceps:['M140 70 L150 110 L160 140','M140 70 L150 110 L175 75'],triceps:['M140 70 L145 35 L115 65','M140 70 L145 35 L145 8'],frontraise:['M140 70 L148 105 L152 135','M140 70 L180 68 L215 62'],dip:['M140 70 L162 92 L172 72','M140 70 L150 105 L152 128']};moving=motion(...pairs[m]);if(m==='row')base+=line('M170 115 V65','#657188',12);if(m==='pull')base+=line('M140 15 H190','#657188',5)}}
+const G=line('M45 150 H275','#657188',5),quad=head(80,92)+line('M93 102 L168 104')+line('M100 106 L100 148')+line('M168 104 L172 146 L205 147');const ex={bench:()=>[G+line('M60 132 H205','#657188',8)+line('M75 136 V150 M190 136 V150','#657188',6),head(80,114)+line('M95 122 L170 122 L195 98 L215 122'),motion('M125 120 L110 100 L125 88','M125 120 L125 85 L125 55')],prone:()=>[G+line('M60 134 H215','#657188',8)+line('M75 138 V150 M200 138 V150','#657188',6),head(72,116)+line('M87 124 L205 124')+line('M100 126 L112 140'),motion('M205 124 L245 124 L258 122','M205 124 L210 88 L214 76')],sidelift:()=>[G,head(75,132)+line('M90 139 L155 139')+line('M155 142 L240 142','#9aa3b5'),motion('M155 137 L240 137','M155 137 L235 103')],kneeup:()=>[G,head(75,132)+line('M90 139 L155 139'),motion('M155 139 L195 118 L235 137','M155 139 L140 100 L182 92')],kick:()=>[G,quad,motion('M168 103 L172 145 L205 146','M168 103 L212 98 L214 62')],birddog:()=>[G,quad,motion('M110 106 L110 148 M160 104 L165 146 L198 147','M110 106 L72 113 L42 116 M160 104 L210 102 L255 100')],plank:()=>[G,head(70,104)+line('M84 112 L165 143 L232 145')+line('M96 116 L96 146 L130 146'),'']};const X=ex[m]&&ex[m]();if(X)[base,body,moving]=X;
 return `<details class="demo" data-ex="${e}"${open?' open':''}><summary>Ver máquina y movimiento</summary><svg viewBox="0 0 320 185" role="img" aria-label="Esquema animado de ${e}"><rect width="320" height="185" rx="12" fill="#161c29"/>${base}${body}${moving}</svg><small>Esquema orientativo animado · violeta: movimiento. La máquina real puede variar. Pedí al profesor que ajuste el equipo.</small></details>`}
 
 // ---------- Utilidades ----------
 const STORE = 'gym-v1';
-const LEGS = new Set(['Extensión de cuádriceps', 'Curl femoral sentado', 'Abductores en máquina', 'Aductores en máquina', 'Elevación de pierna recta', 'Almeja con banda']);
-const NO_KG = new Set(['Dead bug', 'Elevación de pierna recta', 'Almeja con banda']);
-const REPS = { 'Dead bug': '8 por lado', 'Elevación de pierna recta': '10 por lado', 'Almeja con banda': '12 por lado' };
+const LEGS = new Set(LIBRARY.filter(x => x.g === 'Piernas' || x.g === 'Glúteos').map(x => x.n));
+const NO_KG = new Set(LIBRARY.filter(x => x.kg === false).map(x => x.n));
+const REPS = Object.fromEntries(LIBRARY.filter(x => x.r).map(x => [x.n, x.r]));
+const DAYS = ['A', 'B', 'C'];
+const copyRoutines = r => Object.fromEntries(DAYS.map(d => [d, r[d].slice()]));
+// Tiempo estimado: 10 min de entrada en calor y cardio, más unos 4,5 min por ejercicio (2 series con descanso)
+const minutes = n => n ? Math.round((10 + n * 4.5) / 5) * 5 : 0;
 const DAY_LABEL = { A: 'Lun', B: 'Mié', C: 'Vie' };
 const $ = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -83,7 +156,7 @@ const kgText = n => String(Math.round(n * 10) / 10).replace('.', ',');
 
 // ---------- Datos: carga y migración desde la versión 1 ----------
 function blank() {
-  return { v: 3, logs: [], weights: [], settings: { legs: true, painAlert: '', lastBackup: null } };
+  return { v: 4, logs: [], weights: [], routines: copyRoutines(DEFAULT_ROUTINES), settings: { legs: true, painAlert: '', lastBackup: null } };
 }
 function isOld(e) {
   return Object.keys(e.sets || {}).some(k => /^\d+-\d$/.test(k)) || Object.keys(e.kg || {}).some(k => /^\d+$/.test(k));
@@ -103,22 +176,25 @@ function normalize(d) {
   if (!d || typeof d !== 'object' || !Array.isArray(d.logs)) throw new Error('Formato no válido');
   const out = blank();
   out.logs = d.logs
-    .filter(l => l && plans[l.day] && /^\d{4}-\d\d-\d\d$/.test(l.date))
-    .map(l => { const u = upgrade(l, l.day); return { ...u, id: l.id || uid(), total: l.total || Object.keys(u.sets).length * 2 || plans[l.day].length * 2 }; });
+    .filter(l => l && DAYS.includes(l.day) && /^\d{4}-\d\d-\d\d$/.test(l.date))
+    .map(l => { const u = upgrade(l, l.day); return { ...u, id: l.id || uid(), total: l.total || Object.keys(u.sets).length * 2 || PLANS_V1[l.day].length * 2 }; });
   out.weights = (Array.isArray(d.weights) ? d.weights : [])
     .map(w => ({ id: w.id || uid(), date: w.date, kg: num(w.kg) }))
     .filter(w => w.kg && w.date);
   Object.assign(out.settings, d.settings || {});
+  if (d.routines) for (const day of DAYS) {
+    if (Array.isArray(d.routines[day])) out.routines[day] = [...new Set(d.routines[day].filter(e => LIB[e]))];
+  }
   // Las versiones anteriores dejaban la rutina del día como borrador hasta tocar "Guardar".
   // Ahora todo es sesión guardada: los borradores con datos pasan al historial.
   for (const [k, v] of Object.entries(d.drafts || {})) {
     const date = k.slice(0, 10), day = k.slice(10);
-    if (!plans[day] || !v || !/^\d{4}-\d\d-\d\d$/.test(date)) continue;
+    if (!DAYS.includes(day) || !v || !/^\d{4}-\d\d-\d\d$/.test(date)) continue;
     const u = upgrade(v, day);
     const hasData = Object.values(u.sets).some(s => s.some(Boolean)) || Object.values(u.kg).some(Boolean) || u.before !== '' || u.after !== '' || u.warm || u.cardio;
     if (hasData && !out.logs.some(l => l.date === date && l.day === day)) {
       const l = { ...u, id: uid(), date, day, legs: out.settings.legs };
-      syncSession(l, out.settings.legs);
+      syncSession(l, out.settings.legs, out.routines[day]);
       out.logs.push(l);
     }
   }
@@ -141,7 +217,7 @@ function defaultDay() {
   const last = db.logs[db.logs.length - 1];
   return last ? { A: 'B', B: 'C', C: 'A' }[last.day] : 'A';
 }
-let tab = 'Rutina', day = defaultDay(), selEx = null;
+let tab = 'Rutina', day = defaultDay(), selEx = null, editing = false, libGroup = 'Todos', libQuery = '';
 const openDemos = new Set();
 
 // La sesión de hoy se guarda en el historial desde el primer dato que cargás.
@@ -154,8 +230,8 @@ function session() {
   return l;
 }
 // Deja en la sesión los ejercicios visibles, sin perder datos ya cargados
-function syncSession(l, legs = db.settings.legs) {
-  const list = plans[l.day].filter(e => legs || !LEGS.has(e));
+function syncSession(l, legs = db.settings.legs, routine = db.routines[l.day]) {
+  const list = routine.filter(e => legs || !LEGS.has(e));
   for (const e of Object.keys(l.sets)) {
     const empty = !(l.sets[e] || []).some(Boolean) && !l.kg[e];
     if (!list.includes(e) && empty) { delete l.sets[e]; delete l.kg[e]; }
@@ -164,7 +240,7 @@ function syncSession(l, legs = db.settings.legs) {
   l.legs = legs; l.total = Object.keys(l.sets).length * 2;
 }
 const commit = l => { syncSession(l); save(); };
-const exercises = d => plans[d].filter(e => db.settings.legs || !LEGS.has(e));
+const exercises = d => db.routines[d].filter(e => db.settings.legs || !LEGS.has(e));
 const countDone = (sets, list) => list.reduce((n, e) => n + (sets[e] || []).filter(Boolean).length, 0);
 function lastKg(e) {
   const cur = findSession();
@@ -200,7 +276,10 @@ function renderRutina() {
   let h = reminder ? `<div class="warn">${reminder}</div>` : '';
   h += `<section>
     <nav>${['A', 'B', 'C'].map(x => `<button data-act="day" data-day="${x}" class="${day === x ? 'active' : ''}" aria-pressed="${day === x}">${DAY_LABEL[x]} · ${x}</button>`).join('')}</nav>
-    <p>40–45 min · 2 series por ejercicio · carga ligera</p>
+    <p>≈ ${minutes(list.length)} min · ${list.length} ejercicios · 2 series · carga ligera</p>
+    <p><small>${groupSummary(list)}</small></p>
+    <nav><button data-act="edit" aria-pressed="${editing}">${editing ? 'Listo' : 'Editar rutina'}</button><button data-act="goLib">Agregar ejercicios</button></nav>
+    ${editing ? `<p><small>Ordená con las flechas o quitá ejercicios. Lo que ya cargaste en el historial no se borra.</small></p><button class="ghost" data-act="resetRoutine">Volver a la rutina ${day} original</button>` : ''}
     <div class="prog"><progress id="prog" max="${total}" value="${done}"></progress><small id="progTxt">${done} de ${total} series</small></div>
     <label><input type="checkbox" data-act="legs" ${legs ? 'checked' : ''}>Piernas autorizadas por el traumatólogo</label>
     <p><small>${legs
@@ -209,9 +288,11 @@ function renderRutina() {
     <label>Dolor del pie antes (0–10) <select data-field="before">${opts(d.before)}</select></label>
     <label><input type="checkbox" data-field="warm" ${d.warm ? 'checked' : ''}>Entrada en calor: 5 min de ergómetro de brazos o movilidad sentada</label>
   </section>`;
+  if (!list.length) h += `<section><p>La rutina ${day} no tiene ejercicios${db.routines[day].length ? ' visibles (las piernas están ocultas)' : ''}. Sumalos desde «Agregar ejercicios».</p></section>`;
   list.forEach((e, i) => {
     const s = d.sets[e] || [false, false], lk = lastKg(e), noKg = NO_KG.has(e);
-    h += `<section><b>${i + 1}. ${e}</b><p><small>${tips[e]}</small></p>${demo(e, openDemos.has(e))}
+    const tools = editing ? `<nav class="tools"><button data-act="move" data-ex="${e}" data-dir="-1" aria-label="Subir ${e}" ${i ? '' : 'disabled'}>↑</button><button data-act="move" data-ex="${e}" data-dir="1" aria-label="Bajar ${e}" ${i < list.length - 1 ? '' : 'disabled'}>↓</button><button data-act="remove" data-ex="${e}">Quitar</button></nav>` : '';
+    h += `<section><div class="row"><b>${i + 1}. ${e}</b><small>${LIB[e].g}</small></div>${tools}<p><small>${tips[e]}</small></p>${demo(e, openDemos.has(e))}
       <div class="line"><span>${REPS[e] || '12 rep.'}</span>
       ${[0, 1].map(j => `<label class="set"><input type="checkbox" data-act="set" data-ex="${e}" data-j="${j}" ${s[j] ? 'checked' : ''}>S${j + 1}</label>`).join('')}
       ${noKg ? '' : `<input class="kg" type="text" inputmode="decimal" placeholder="${lk ? kgText(lk.kg) : 'kg'}" aria-label="Kilos en ${e}" data-act="kg" data-ex="${e}" value="${d.kg[e] ? kgText(d.kg[e]) : ''}"><span>kg</span>`}</div>
@@ -305,9 +386,72 @@ function renderProgreso() {
   return h;
 }
 
+function groupSummary(list) {
+  const c = {}; list.forEach(e => { const g = LIB[e].g; c[g] = (c[g] || 0) + 1; });
+  return GROUPS.filter(g => c[g]).map(g => `${g} ${c[g]}`).join(' · ');
+}
+const fold = s => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function renderEjercicios() {
+  let h = `<h2>Ejercicios</h2>
+  <section><b>Tu semana</b>
+    ${DAYS.map(d => { const l = exercises(d); return `<p class="row"><span>Rutina ${d} (${DAY_LABEL[d]})</span><small>${l.length} ejercicios · ≈ ${minutes(l.length)} min</small></p>`; }).join('')}
+    <p><small>Ejercicios por músculo en la semana: ${GROUPS.map(g => `${g} ${DAYS.reduce((n, d) => n + exercises(d).filter(e => LIB[e].g === g).length, 0)}`).join(' · ')}</small></p>
+  </section>
+  <section>
+    <p><small>Todos son sin impacto, sentado, acostado o con apoyo, sin cargar peso sobre el pie. Tocá A, B o C para sumar o quitar un ejercicio de cada rutina.</small></p>
+    <input id="libSearch" type="search" placeholder="Buscar ejercicio" aria-label="Buscar ejercicio" value="${libQuery.replace(/"/g, '&quot;')}">
+    <nav class="chips">${['Todos', ...GROUPS].map(g => `<button data-act="group" data-group="${g}" class="${libGroup === g ? 'active' : ''}" aria-pressed="${libGroup === g}">${g}</button>`).join('')}</nav>
+  </section>`;
+  for (const g of GROUPS) {
+    h += `<div class="libgroup" data-group="${g}"><h2>${g}</h2>`;
+    LIBRARY.filter(x => x.g === g).forEach(x => {
+      const hidden = !db.settings.legs && LEGS.has(x.n);
+      h += `<section class="libcard" data-name="${fold(x.n)}"><b>${x.n}</b><p><small>${x.t}</small></p>${demo(x.n, openDemos.has(x.n))}
+        <div class="row"><small>${REPS[x.n] || '12 rep.'}${NO_KG.has(x.n) ? '' : ' · con peso'}</small>
+        <nav>${DAYS.map(d => { const on = db.routines[d].includes(x.n); return `<button data-act="toggleEx" data-ex="${x.n}" data-day="${d}" class="${on ? 'active' : ''}" aria-pressed="${on}" aria-label="${on ? 'Quitar de' : 'Agregar a'} la rutina ${d}">${on ? '✓ ' : '+ '}${d}</button>`; }).join('')}</nav></div>
+        ${hidden ? '<p><small>Oculto en la rutina mientras «Piernas autorizadas» esté apagado.</small></p>' : ''}
+      </section>`;
+    });
+    h += '</div>';
+  }
+  return h + '<p id="libEmpty" class="muted" hidden>No hay ejercicios con ese nombre.</p>';
+}
+function applyLibFilter() {
+  if (tab !== 'Ejercicios') return;
+  const q = fold(libQuery.trim()); let any = false;
+  document.querySelectorAll('.libgroup').forEach(gEl => {
+    let vis = 0;
+    gEl.querySelectorAll('.libcard').forEach(c => {
+      const show = (libGroup === 'Todos' || gEl.dataset.group === libGroup) && (!q || c.dataset.name.includes(q));
+      c.hidden = !show; if (show) vis++;
+    });
+    gEl.hidden = !vis; if (vis) any = true;
+  });
+  $('libEmpty').hidden = any;
+}
+// Cambios en una rutina: también se reflejan en la sesión de hoy de esa rutina
+function routineChanged(d) {
+  db.logs.filter(l => l.date === today() && l.day === d).forEach(l => syncSession(l));
+  save();
+}
+function toggleEx(e, d) {
+  const r = db.routines[d], i = r.indexOf(e);
+  if (i >= 0) { r.splice(i, 1); toast(`Quitado de la rutina ${d}`); }
+  else { r.push(e); toast(`Agregado a la rutina ${d}`); }
+  routineChanged(d);
+}
+function moveEx(e, dir) {
+  const full = db.routines[day], vis = exercises(day), other = vis[vis.indexOf(e) + dir];
+  if (!other) return;
+  const i = full.indexOf(e), j = full.indexOf(other);
+  [full[i], full[j]] = [full[j], full[i]];
+  routineChanged(day); render();
+}
+
 function render() {
-  $('tabs').innerHTML = ['Rutina', 'Historial', 'Progreso'].map(t => `<button data-act="tab" data-tab="${t}" class="${tab === t ? 'active' : ''}" aria-pressed="${tab === t}">${t}</button>`).join('');
-  $('main').innerHTML = tab === 'Historial' ? renderHistorial() : tab === 'Progreso' ? renderProgreso() : renderRutina();
+  $('tabs').innerHTML = ['Rutina', 'Ejercicios', 'Historial', 'Progreso'].map(t => `<button data-act="tab" data-tab="${t}" class="${tab === t ? 'active' : ''}" aria-pressed="${tab === t}">${t}</button>`).join('');
+  $('main').innerHTML = tab === 'Historial' ? renderHistorial() : tab === 'Progreso' ? renderProgreso() : tab === 'Ejercicios' ? renderEjercicios() : renderRutina();
+  applyLibFilter();
   $('timerbar').hidden = !(tab === 'Rutina' || tEnd);
   if (tab === 'Rutina') updatePain();
 }
@@ -415,7 +559,23 @@ document.addEventListener('click', ev => {
   const b = ev.target.closest('[data-act]');
   if (!b || b.tagName === 'INPUT' || b.tagName === 'SELECT') return;
   switch (b.dataset.act) {
-    case 'tab': tab = b.dataset.tab; render(); scrollTo(0, 0); break;
+    case 'tab': tab = b.dataset.tab; editing = false; render(); scrollTo(0, 0); break;
+    case 'edit': editing = !editing; render(); break;
+    case 'goLib': tab = 'Ejercicios'; editing = false; render(); scrollTo(0, 0); break;
+    case 'group': libGroup = b.dataset.group; document.querySelectorAll('[data-act=group]').forEach(x => { const on = x.dataset.group === libGroup; x.classList.toggle('active', on); x.setAttribute('aria-pressed', on); }); applyLibFilter(); break;
+    case 'toggleEx': {
+      toggleEx(b.dataset.ex, b.dataset.day);
+      const on = db.routines[b.dataset.day].includes(b.dataset.ex);
+      b.classList.toggle('active', on); b.setAttribute('aria-pressed', on);
+      b.setAttribute('aria-label', `${on ? 'Quitar de' : 'Agregar a'} la rutina ${b.dataset.day}`);
+      b.textContent = (on ? '✓ ' : '+ ') + b.dataset.day;
+      break;
+    }
+    case 'move': moveEx(b.dataset.ex, +b.dataset.dir); break;
+    case 'remove': toggleEx(b.dataset.ex, day); render(); break;
+    case 'resetRoutine':
+      if (confirm(`¿Volver la rutina ${day} a los ejercicios originales?`)) { db.routines[day] = DEFAULT_ROUTINES[day].slice(); routineChanged(day); render(); toast('Rutina restaurada'); }
+      break;
     case 'day': day = b.dataset.day; render(); break;
     case 'finish': finish(); break;
     case 'export': exportData(); break;
@@ -453,7 +613,9 @@ $('main').addEventListener('change', ev => {
   }
 });
 $('main').addEventListener('input', ev => {
-  const t = ev.target; if (t.dataset.act !== 'kg') return;
+  const t = ev.target;
+  if (t.id === 'libSearch') { libQuery = t.value; applyLibFilter(); return; }
+  if (t.dataset.act !== 'kg') return;
   const v = t.value.trim(), n = num(v);
   if (v === '') { const l = findSession(); if (l && l.kg[t.dataset.ex]) { l.kg[t.dataset.ex] = null; save(); } return; }
   if (n !== null && n <= 500) { const l = session(); l.kg[t.dataset.ex] = n; commit(l); }

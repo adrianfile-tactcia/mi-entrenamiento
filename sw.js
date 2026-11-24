@@ -1,5 +1,5 @@
 // Cambiá el número de versión cada vez que subas cambios.
-const CACHE = 'gym-app-v3';
+const CACHE = 'gym-app-v4';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => e.waitUntil(
